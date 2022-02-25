@@ -228,6 +228,9 @@ begin
          d := d + pi / 79; if d >= 2 * pi then d := d - 2 * pi;
       end;
 
+      WM_ERASEBKGND:
+         WndProc := 1;
+
       WM_TIMER: InvalidateRect(hwnd, @qRect, False);
 
       WM_KEYDOWN:
