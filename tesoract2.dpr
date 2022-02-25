@@ -40,6 +40,7 @@ const
     (1,0,0,1),
     (1,0,0,0));
    cubeCenter: vec4 = (-0.5, -0.5, -0.5, -0.5);
+   textColor: RGB = (b: 50; g: 78; r: 40);
 
 var
    hInst, x, hdc, hwnd: LongWord;
@@ -150,23 +151,25 @@ begin
 
          FillMemory(bmp, sx * sy * 3, 0);
          for i := 1 to 16 do begin
+
             translate4d(t[i], v00[i], cubeCenter);
+
             scale4d(dr[i], t[i], sz);
-            rotate4d(t[i], dr[i], a, 1, 2, 3, 0);
-            rotate4d(dr[i], t[i], b, 2, 3, 0, 1);
-            rotate4d(t[i], dr[i], c, 3, 0, 1, 2);
-            rotate4d(dr[i], t[i], d, 0, 1, 2, 3);
+
+            rotate4d(t [i], dr[i], a, 1, 2, 3, 0);
+            rotate4d(dr[i], t [i], b, 2, 3, 0, 1);
+            rotate4d(t [i], dr[i], c, 3, 0, 1, 2);
+            rotate4d(dr[i], t [i], d, 0, 1, 2, 3);
+
             for j := 1 to ec do begin
-            line(round(sx div 2 + dr[e00[j, 0]][0]),
-                 round(sy div 2 + dr[e00[j, 0]][2]),
-                 round(sx div 2 + dr[e00[j, 1]][0]),
-                 round(sy div 2 + dr[e00[j, 1]][2]));
+               line(round(sx div 2 + dr[e00[j, 0]][0]),
+                    round(sy div 2 + dr[e00[j, 0]][2]),
+                    round(sx div 2 + dr[e00[j, 1]][0]),
+                    round(sy div 2 + dr[e00[j, 1]][2]));
             end;
          end;
 
-         xcol.b := 50;
-         xcol.g := 78;
-         xcol.r := 40;
+         xcol := textColor;
 
          line(32, 28, 32, 51);
          line(32, 28, 46, 36);
