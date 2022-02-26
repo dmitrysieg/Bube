@@ -53,15 +53,16 @@ var
    e00: array [1..100, 0..1] of Word;
 
    mainMonitorScreenSize: TPoint;
-   i, j, m, k, ec, delay, sx, sy, sz: Integer;
+   i, j, m, k, ec, sx, sy, sz: Integer;
+   delay: Integer = 20;
    a, b, c, d: Real;
    xcol: RGB;
-   isPaused: Boolean;
-   qrect: TRect;
+   isPaused: Boolean = False;
+   qRect: TRect;
 
    tick, delta, deltaDelay: LongWord;
    fpsStr: String;
-   isFpsToggle: Boolean = false;
+   isFpsToggle: Boolean = False;
 
 procedure rotate4d(var dst: vec4;
                        src: vec4;
@@ -231,7 +232,7 @@ begin
          end;
 
          if isFpsToggle then
-            TextOut(pStr.hdc, 0, 0, PChar(fpsStr + #0), length(fpsStr));
+            TextOut(pStr.hdc, 0, 0, PChar(fpsStr), length(fpsStr));
 
          EndPaint(hwnd, pStr);
       end;
@@ -367,9 +368,7 @@ begin
    RegisterClass(wClass);
    hwnd := CreateWindow(clsName, wndName, WS_POPUP, 0, 0, sx, sy, 0, 0, hInst, nil);
 
-   delay := 20;
    settimer(hwnd, $300, delay, nil);
-   isPaused := False;
    ShowWindow(hwnd, SW_SHOWNORMAL);
    UpdateWindow(hwnd);
    hdc := GetDC(hwnd);
