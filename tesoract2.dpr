@@ -137,6 +137,7 @@ end;
 function WndProc(hwnd, msg, wPar, lPar: LongWord): LongWord; stdcall;
 var
    pStr: TPaintStruct;
+   lHdc, memHdc, membitmap: LongWord;
 begin
    case msg of
 
@@ -148,8 +149,6 @@ begin
       end;
 
       WM_PAINT: begin
-
-         BeginPaint(hwnd, pStr);
 
          xcol.b := round(255 * cos(a));
          xcol.g := round(255 * cos(b));
@@ -211,9 +210,19 @@ begin
          line(160, 51, 160, 27);
          line(160, 27, 150, 28);
 
-         StretchDIBits(pStr.hdc, 0, 0, sx, sy,
-                                 0, 0, sx, sy,
-                                 bmp, hdr, DIB_RGB_COLORS, SRCCOPY);
+         lHdc := BeginPaint(hwnd, pStr);
+
+         memHdc := CreateCompatibleDC(lHdc);
+         membitmap := CreateCompatibleBitmap(lHdc, sx, sy);
+         SelectObject(memHdc, membitmap);
+
+         StretchDIBits(lHdc, 0, 0, sx, sy,
+                             0, 0, sx, sy,
+                             bmp, hdr, DIB_RGB_COLORS, SRCCOPY);
+
+         SelectObject(lHdc, membitmap);
+         DeleteObject(membitmap);
+         DeleteDC(memHdc);
 
          a := a + pi / 41; if a >= 2 * pi then a := a - 2 * pi;
          b := b + pi / 53; if b >= 2 * pi then b := b - 2 * pi;
@@ -236,6 +245,9 @@ begin
 
          EndPaint(hwnd, pStr);
       end;
+
+      WM_ERASEBKGND:
+         WndProc := 1;
 
       WM_TIMER: InvalidateRect(hwnd, @qRect, False);
 
@@ -380,6 +392,6 @@ begin
 
    DeleteObject(wClass.hbrBackground);
    DestroyCursor(wClass.hCursor);
-   releasedc(hwnd, hdc);
+   ReleaseDC(hwnd, hdc);
    GlobalFree(Cardinal(bmp));
 end.
