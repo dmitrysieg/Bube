@@ -6,8 +6,7 @@ program Tesoract3;
 uses
    Windows,
    MultiMon,
-   Messages,
-   SysUtils;
+   Messages;
 
 
 type
@@ -41,6 +40,7 @@ const
     (1,0,0,0));
    cubeCenter: vec4 = (-0.5, -0.5, -0.5, -0.5);
    textColor: RGB = (b: 50; g: 78; r: 40);
+   FPS_REFRESH_RATE: Integer = 200;
 
 var
    hInst, x, hdc, hwnd: LongWord;
@@ -58,6 +58,10 @@ var
    xcol: RGB;
    isPaused: Boolean;
    qrect: TRect;
+
+   tick, delta, deltaDelay: LongWord;
+   fpsStr: String;
+   isFpsToggle: Boolean = false;
 
 procedure rotate4d(var dst: vec4;
                        src: vec4;
@@ -143,6 +147,7 @@ begin
       end;
 
       WM_PAINT: begin
+
          BeginPaint(hwnd, pStr);
 
          xcol.b := round(255 * cos(a));
@@ -214,6 +219,20 @@ begin
          c := c + pi / 67; if c >= 2 * pi then c := c - 2 * pi;
          d := d + pi / 79; if d >= 2 * pi then d := d - 2 * pi;
 
+         delta := GetTickCount() - tick;
+         tick := GetTickCount();
+         deltaDelay := deltaDelay + delta;
+         if (delta > 0) and (deltaDelay > FPS_REFRESH_RATE) then begin
+
+            Str(1000 div delta, fpsStr);
+            fpsStr := fpsStr + #9 + 'FPS';
+
+            dec(deltaDelay, FPS_REFRESH_RATE);
+         end;
+
+         if isFpsToggle then
+            TextOut(pStr.hdc, 0, 0, PChar(fpsStr + #0), length(fpsStr));
+
          EndPaint(hwnd, pStr);
       end;
 
@@ -245,6 +264,10 @@ begin
                   dec(delay);
                KillTimer(hwnd, $300);
                SetTimer(hwnd, $300, delay, nil);
+            end;
+
+            VK_F2: begin
+               isFpsToggle := not isFpsToggle; 
             end;
          end;
 
@@ -293,6 +316,8 @@ begin
    qRect.Top := 0;
    qRect.Right := sx - 1;
    qRect.Bottom := sy - 1;
+
+   tick := GetTickCount();
 
    for i := 1 to 16 do v00[i] := bube[i];
 
