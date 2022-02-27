@@ -42,10 +42,10 @@ const
     (1,0,0,0));
    cubeCenter: vec4 = (-0.5, -0.5, -0.5, -0.5);
    textColor: RGB = (b: 50; g: 78; r: 40);
-   FPS_REFRESH_RATE: Integer = 200;
+   FPS_REFRESH_RATE: LongWord = 200;
 
 var
-   hInst, x, hdc, hwnd: LongWord;
+   hInst, hdc, hwnd: LongWord;
    wClass: TWndClass;
    msg: tagMSG;
    emptyCursor: array [0..255] of Byte;
@@ -150,6 +150,7 @@ function WndProc(hwnd, msg, wPar, lPar: LongWord): LongWord; stdcall;
 var
    pStr: TPaintStruct;
    lHdc, memHdc, membitmap: LongWord;
+   i, j: Integer;
 begin
    case msg of
 
@@ -158,6 +159,7 @@ begin
       WM_DESTROY: begin
          KillTimer(hwnd, $300);
          PostQuitMessage(0);
+         WndProc := 0;
       end;
 
       WM_PAINT: begin
@@ -257,14 +259,18 @@ begin
             TextOut(pStr.hdc, 0, 0, PChar(fpsStr), length(fpsStr));
 
          EndPaint(hwnd, pStr);
+         WndProc := 0;
       end;
 
       WM_ERASEBKGND:
          WndProc := 1;
 
-      WM_TIMER: InvalidateRect(hwnd, @qRect, False);
+      WM_TIMER: begin
+         InvalidateRect(hwnd, @qRect, False);
+         WndProc := 0;
+      end;
 
-      WM_KEYDOWN:
+      WM_KEYDOWN: begin
          case wPar of
 
             VK_ESCAPE: sendmessage(hwnd,WM_CLOSE,0,0);
@@ -296,6 +302,8 @@ begin
                isFpsToggle := not isFpsToggle; 
             end;
          end;
+         WndProc := 0;
+      end;
 
       else WndProc := DefWindowProc(hwnd, msg, wPar, lPar);
    end;
@@ -331,7 +339,7 @@ end;
 
 function DwmFlushEmpty: HRESULT; stdcall;
 begin
-   // do nothing
+   result := S_OK;
 end;
 
 function LoadDwmFlush: TDwmFlush;
