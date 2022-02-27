@@ -51,11 +51,12 @@ var
    junk: array [0..255] of Byte;
    bmp: ^TArr;
    hdr: BITMAPINFO;
-   v00, dr, t: array [1..16] of vec4;
-   e00: array [1..100, 0..1] of Word;
+   vertices, dr, t: array [1..16] of vec4;
+   edges: array [1..32, 0..1] of Word;
 
    mainMonitorScreenSize: TPoint;
    i, j, m, k, ec, sx, sy, sz: Integer;
+   screenCenterX, screenCenterY: Integer;
    delay: Integer = 20;
    a, b, c, d: Real;
    xcol: RGB;
@@ -68,31 +69,30 @@ var
 
    DwmFlush: TDwmFlush;
 
-procedure rotate4d(var dst: vec4;
-                       src: vec4;
-                       angle: real;
-                       t0, t1, t2, t3: Integer);
+function rotate4d(src: vec4;
+                  angle: real;
+                  t0, t1, t2, t3: Integer): vec4;
 begin
-   dst[t0] := src[t0] * cos(angle) - src[t1] * sin(angle);
-   dst[t1] := src[t0] * sin(angle) + src[t1] * cos(angle);
-   dst[t2] := src[t2];
-   dst[t3] := src[t3]
+   result[t0] := src[t0] * cos(angle) - src[t1] * sin(angle);
+   result[t1] := src[t0] * sin(angle) + src[t1] * cos(angle);
+   result[t2] := src[t2];
+   result[t3] := src[t3]
 end;
 
-procedure translate4d(var dst: vec4; src, mov: vec4);
+function translate4d(src, mov: vec4): vec4;
 begin
-   dst[0] := src[0] + mov[0];
-   dst[1] := src[1] + mov[1];
-   dst[2] := src[2] + mov[2];
-   dst[3] := src[3] + mov[3]
+   result[0] := src[0] + mov[0];
+   result[1] := src[1] + mov[1];
+   result[2] := src[2] + mov[2];
+   result[3] := src[3] + mov[3]
 end;
 
-procedure scale4d(var dst: vec4; src: vec4; k: real);
+function scale4d(src: vec4; k: real): vec4;
 begin
-   dst[0] := src[0] * k;
-   dst[1] := src[1] * k;
-   dst[2] := src[2] * k;
-   dst[3] := src[3] * k
+   result[0] := src[0] * k;
+   result[1] := src[1] * k;
+   result[2] := src[2] * k;
+   result[3] := src[3] * k
 end;
 
 procedure line(x1, y1, x2, y2: Integer);
@@ -161,20 +161,20 @@ begin
          FillMemory(bmp, sx * sy * 3, 0);
          for i := 1 to 16 do begin
 
-            translate4d(t[i], v00[i], cubeCenter);
+            t[i] := translate4d(vertices[i], cubeCenter);
 
-            scale4d(dr[i], t[i], sz);
+            dr[i] := scale4d(t[i], sz);
 
-            rotate4d(t [i], dr[i], a, 1, 2, 3, 0);
-            rotate4d(dr[i], t [i], b, 2, 3, 0, 1);
-            rotate4d(t [i], dr[i], c, 3, 0, 1, 2);
-            rotate4d(dr[i], t [i], d, 0, 1, 2, 3);
+            t [i] := rotate4d(dr[i], a, 1, 2, 3, 0);
+            dr[i] := rotate4d(t [i], b, 2, 3, 0, 1);
+            t [i] := rotate4d(dr[i], c, 3, 0, 1, 2);
+            dr[i] := rotate4d(t [i], d, 0, 1, 2, 3);
 
             for j := 1 to ec do begin
-               line(round(sx div 2 + dr[e00[j, 0]][0]),
-                    round(sy div 2 + dr[e00[j, 0]][2]),
-                    round(sx div 2 + dr[e00[j, 1]][0]),
-                    round(sy div 2 + dr[e00[j, 1]][2]));
+               line(round(screenCenterX + dr[edges[j, 0]][0]),
+                    round(screenCenterY + dr[edges[j, 0]][2]),
+                    round(screenCenterX + dr[edges[j, 1]][0]),
+                    round(screenCenterY + dr[edges[j, 1]][2]));
             end;
          end;
 
@@ -352,19 +352,22 @@ begin
    qRect.Right := sx - 1;
    qRect.Bottom := sy - 1;
 
+   screenCenterX := sx div 2;
+   screenCenterY := sy div 2;
+
    tick := GetTickCount();
 
-   for i := 1 to 16 do v00[i] := bube[i];
+   for i := 1 to 16 do vertices[i] := bube[i];
 
    for i := 1 to 16 do begin
       for j := i + 1 to 16 do
          if i <> j then begin
             m := 0;
-            for k := 0 to 3 do if v00[i][k] <> v00[j][k] then inc(m);
+            for k := 0 to 3 do if vertices[i][k] <> vertices[j][k] then inc(m);
             if m = 1 then begin
                inc(ec);
-               e00[ec, 0] := i;
-               e00[ec, 1] := j
+               edges[ec, 0] := i;
+               edges[ec, 1] := j
             end;
          end;
    end;
@@ -402,7 +405,7 @@ begin
    RegisterClass(wClass);
    hwnd := CreateWindow(clsName, wndName, WS_POPUP, 0, 0, sx, sy, 0, 0, hInst, nil);
 
-   settimer(hwnd, $300, delay, nil);
+   SetTimer(hwnd, $300, delay, nil);
    ShowWindow(hwnd, SW_SHOWNORMAL);
    UpdateWindow(hwnd);
    hdc := GetDC(hwnd);
