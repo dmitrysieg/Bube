@@ -95,6 +95,14 @@ begin
    result[3] := src[3] * k
 end;
 
+function dirtify(src: vec4; value: Real): vec4;
+begin
+   result[0] := src[0] + (-value + 2.0 * value * Random);
+   result[1] := src[1] + (-value + 2.0 * value * Random);
+   result[2] := src[2] + (-value + 2.0 * value * Random);
+   result[3] := src[3] + (-value + 2.0 * value * Random);
+end;
+
 procedure line(x1, y1, x2, y2: Integer);
 var
    q, xe, ye, dx, dy, ix, iy, d, x, y: Integer;
@@ -373,6 +381,7 @@ begin
    end;
 
    randomize;
+   for i := 1 to 16 do vertices[i] := dirtify(vertices[i], 0.05);
 
    hInst := GetModuleHandle(nil);
    with hdr.bmiHeader do begin
