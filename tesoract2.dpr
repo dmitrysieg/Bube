@@ -17,10 +17,12 @@ type
    TArr = array [0..0] of RGB;
    vec4 = array [0..3] of Real;
 
+   TDwmFlush = function: HRESULT; stdcall;
+
 const
    DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE = DPI_AWARENESS_CONTEXT(-3);
-   clsName = 'TSRClass' + #0;
-   wndName = '' + #0;
+   clsName: PChar = 'TSRClass';
+   wndName: PChar = '';
    bube: array [1..16] of vec4 =
    ((0,0,0,0),
     (0,0,0,1),
@@ -63,6 +65,8 @@ var
    tick, delta, deltaDelay: LongWord;
    fpsStr: String;
    isFpsToggle: Boolean = False;
+
+   DwmFlush: TDwmFlush;
 
 procedure rotate4d(var dst: vec4;
                        src: vec4;
@@ -210,6 +214,7 @@ begin
          line(160, 51, 160, 27);
          line(160, 27, 150, 28);
 
+         DwmFlush;
          lHdc := BeginPaint(hwnd, pStr);
 
          memHdc := CreateCompatibleDC(lHdc);
@@ -316,8 +321,25 @@ begin
    SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE);
 end;
 
+function DwmFlushEmpty: HRESULT; stdcall;
+begin
+   // do nothing
+end;
+
+function LoadDwmFlush: TDwmFlush;
+var
+   hModule: Windows.HMODULE;
+begin
+   hModule := LoadLibrary('dwmapi.dll');
+   if hModule = 0 then
+      LoadDwmFlush := DwmFlushEmpty
+   else
+      LoadDwmFlush := GetProcAddress(hModule, 'DwmFlush');
+end;
+
 begin
    adjustDpiAwareness();
+   DwmFlush := LoadDwmFlush();
 
    mainMonitorScreenSize := GetMainMonitorScreenSize();
 
