@@ -48,7 +48,7 @@ var
    hInst, x, hdc, hwnd: LongWord;
    wClass: TWndClass;
    msg: tagMSG;
-   junk: array [0..255] of Byte;
+   emptyCursor: array [0..255] of Byte;
    bmp: ^TArr;
    hdr: BITMAPINFO;
    vertices, dr, t: array [1..16] of vec4;
@@ -394,7 +394,7 @@ begin
       biSizeImage    := sx * sy * 3
    end;
 
-   for x := 0 to 127 do junk[x] := 255;
+   FillChar(emptyCursor, 128, 255);
 
    bmp := Pointer(GlobalAlloc(GMEM_FIXED, 3 * sx * sy));
 
@@ -405,7 +405,7 @@ begin
       cbWndExtra     := 0;
       hInstance      := hInst;
       hIcon          := LoadIcon(0, IDI_APPLICATION);
-      hCursor        := CreateCursor(hInst, 0, 0, 32, 32, @junk, @junk[128]);
+      hCursor        := CreateCursor(hInst, 0, 0, 32, 32, @emptyCursor, @emptyCursor[128]);
       hbrBackground  := CreateSolidBrush(0);
       lpszMenuName   := nil;
       lpszClassName  := clsName;
